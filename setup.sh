@@ -11,7 +11,15 @@ sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail htt
 sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 sudo apt update
 sudo apt install -y postgresql-17 nginx python3 python3-pip python3-venv
-pip install -r ./mywebapp/requirements.txt
+
+# Install pip packages
+sudo mkdir -p /etc/mywebapp
+sudo cp -r ./mywebapp/* /etc/mywebapp/
+sudo cp ./config.toml /etc/mywebapp/config.toml
+sudo chown -R app:app /etc/mywebapp
+
+sudo -u app python3 -m venv /etc/mywebapp/venv
+sudo -u app /etc/mywebapp/venv/bin/pip install -r /etc/mywebapp/requirements.txt
 
 echo 'Creating users'
 # User student creation
@@ -28,9 +36,9 @@ sudo chage -d 0 teacher
 sudo useradd -m -s /bin/false app
 
 # User operator creation
-sudo useradd -m -s /bin/bash operator
-sudo usermod -aG sudo operator
-sudo echo "operator:12345678" | chpasswd
+sudo groupadd -f operator
+sudo useradd -m -s /bin/bash -g operator operator || true
+echo "operator:12345678" | sudo chpasswd
 sudo chage -d 0 operator
 
 # Operator restrictions
@@ -40,9 +48,6 @@ echo 'operator ALL=(ALL) NOPASSWD: /usr/bin/systemctl start mywebapp.service, \
   | sudo tee /etc/sudoers.d/operator-rules > /dev/null
 chmod 0440 /etc/sudoers.d/operator-rules
 
-# Lock default vagrant user
-sudo passwd -l vagrant
-sudo chage -E 0 vagrant
 
 # Vagrant Ubuntu boxes usually disable password SSH logins by default.
 echo 'Allowing for ssh into virtual machine'
@@ -54,28 +59,27 @@ echo 'Configuring postgresql'
 sudo cp ./postgresql.conf /var/lib/psql/17/main/postgresql.conf
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
-sudo -i -u postgres
-createuser app
-createdb mywebapp_db 
-psql
-alter user app with encrypted password '12345678'; # make it get out of config
-grant all privileges on database mywebapp_db to app;
-\q
+sudo -u postgres psql -c "CREATE USER app WITH ENCRYPTED PASSWORD '12345678';" || true
+sudo -u postgres psql -c "CREATE DATABASE mywebapp_db OWNER app;" || true
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE mywebapp_db TO app;"
 
-# Configuring and starting web app
-echo 'Starting up webapp'
-sudo cp -r ./mywebapp /etc/mywebapp
-sudo cp ./mywebapp.service /etc/systemd/system/mywebapp.service
-systemctl start mywebapp
-systemctl enable mywebapp
-
-# Start nginx
+# Nginx
 echo 'Configuring nginx'
-cp ./mywebapp.conf /etc/nginx/sites-available/vaultwarden.conf
-sudo ln -s /etc/nginx/sites-available/vaultwarden.conf /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl start nginx
+sudo cp ./mywebapp.conf /etc/nginx/sites-available/mywebapp.conf
+sudo ln -sf /etc/nginx/sites-available/mywebapp.conf /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo systemctl restart nginx
 
+# Systemd
+echo 'Starting up webapp'
+sudo cp ./mywebapp.service /etc/systemd/system/mywebapp.service
+sudo systemctl daemon-reload
+sudo systemctl enable mywebapp
+sudo systemctl start mywebapp
 
 # Gradebook
-echo "29" > /home/student/gradebook
+echo "29" | sudo tee /home/student/gradebook
+
+# Lock default vagrant user
+sudo passwd -l vagrant
+sudo chage -E 0 vagrant
