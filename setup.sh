@@ -70,7 +70,7 @@ sudo cp ./config.toml /etc/mywebapp/config.toml
 sudo chown -R root:app /etc/mywebapp
 sudo chmod 640 /etc/mywebapp/config.toml
 sudo mkdir -p /opt/mywebapp
-sudo cp ./app.py ./migrate.py ./requirements.txt /opt/mywebapp/
+sudo cp ./mywebapp/app.py ./mywebapp/migrate.py ./mywebapp/requirements.txt /opt/mywebapp/
 sudo chown -R app:app /opt/mywebapp
 sudo -u app python3 -m venv /opt/mywebapp/venv
 sudo -u app /opt/mywebapp/venv/bin/pip install -r /opt/mywebapp/requirements.txt
