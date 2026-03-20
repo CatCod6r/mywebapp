@@ -1,7 +1,6 @@
 #!/bin/sh
 
-
-#set +e
+set +e
 # Installing packets
 echo 'Installing necessary packages'
 sudo apt update && sudo apt upgrade -y
