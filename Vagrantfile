@@ -14,6 +14,7 @@ Vagrant.configure("2") do |config|
     git clone https://github.com/CatCod6r/mywebapp.git
     cd mywebapp
     chmod +x ./script.sh    
+    sudo ./script.sh
   SHELL
 
   config.trigger.after :up do |trigger|

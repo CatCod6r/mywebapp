@@ -1,0 +1,5 @@
+db_host = "127.0.0.1"
+db_name = "mywebapp-db"
+db_user = "mywebapp-user"
+db_password = "12345678"
+port = 5000

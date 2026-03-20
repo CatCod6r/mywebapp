@@ -1,15 +1,23 @@
 #!/bin/sh
 
-# встановити необхідні пакети - x
 # створити користувачів - x
 # створити базу даних - x
 # скопіювати або згенерувати конфігураційні файли - x
 # встановити systemd-сервіс для веб-застосунку - x
 # запустити сервіс - x
 # налаштувати nginx - x
-# (обов’язково) створити текстовий файл - Y
+
+# Installing packets
+sudo apt install -y postgresql nginx python 
+pip install flask ..,
+
+# Config file creation
+
+
+# Systemd file for web app
  
 #Adding all needed users(app, operator, student)
+
 # Adding user for testing by teacher
 useradd -m -s /bin/bash teacher
 echo "teacher:12345678" | chpasswd
