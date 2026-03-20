@@ -12,17 +12,6 @@ sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresq
 sudo apt update
 sudo apt install -y postgresql-17 nginx python3 python3-pip python3-venv
 
-# Install pip packages
-sudo mkdir -p /etc/mywebapp
-sudo cp ./config.toml /etc/mywebapp/config.toml
-sudo chown -R root:app /etc/mywebapp
-sudo chmod 640 /etc/mywebapp/config.toml
-sudo mkdir -p /opt/mywebapp
-sudo cp ./app.py ./migrate.py ./requirements.txt /opt/mywebapp/
-sudo chown -R app:app /opt/mywebapp
-sudo -u app python3 -m venv /opt/mywebapp/venv
-sudo -u app /opt/mywebapp/venv/bin/pip install -r /opt/mywebapp/requirements.txt
-
 echo 'Creating users'
 # User student creation
 sudo useradd -m -s /bin/bash student
@@ -74,6 +63,17 @@ sudo systemctl restart nginx
 
 # Systemd
 echo 'Starting up webapp'
+# Install pip packages
+sudo mkdir -p /etc/mywebapp
+sudo cp ./config.toml /etc/mywebapp/config.toml
+sudo chown -R root:app /etc/mywebapp
+sudo chmod 640 /etc/mywebapp/config.toml
+sudo mkdir -p /opt/mywebapp
+sudo cp ./app.py ./migrate.py ./requirements.txt /opt/mywebapp/
+sudo chown -R app:app /opt/mywebapp
+sudo -u app python3 -m venv /opt/mywebapp/venv
+sudo -u app /opt/mywebapp/venv/bin/pip install -r /opt/mywebapp/requirements.txt
+
 sudo cp ./mywebapp.service /etc/systemd/system/mywebapp.service
 sudo systemctl daemon-reload
 sudo systemctl enable mywebapp
