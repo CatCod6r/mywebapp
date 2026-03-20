@@ -48,7 +48,7 @@ sudo systemctl restart ssh
 # Install and enable postgresql
 echo 'Configuring postgresql'
 sudo systemctl status postgresql
-sudo cp ./postgresql.conf /etc/postgresql/17/main/postgresql.conf
+# sudo cp ./postgresql.conf /etc/postgresql/17/main/postgresql.conf
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 sudo -u postgres psql -c "CREATE USER app WITH ENCRYPTED PASSWORD '12345678';" || true
