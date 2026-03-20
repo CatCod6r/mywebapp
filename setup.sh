@@ -5,9 +5,11 @@
 # Installing packets
 echo 'Installing necessary packages'
 sudo apt update && sudo apt upgrade -y
-sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'G
-curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
-sudo apt update -y
+sudo apt install -y curl ca-certificates
+sudo install -d /usr/share/postgresql-common/pgdg
+sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+sudo apt update
 sudo apt install -y postgresql-17 nginx python3 python3-pip python3-venv
 pip install -r ./mywebapp/requirements.txt
 
@@ -24,7 +26,6 @@ sudo chage -d 0 teacher
 
 # User app creation
 sudo useradd -m -s /bin/false app
-sudo usermod -aG postgres app
 
 # User operator creation
 sudo useradd -m -s /bin/bash operator
@@ -50,7 +51,7 @@ sudo systemctl restart ssh
 
 # Install and enable postgresql
 echo 'Configuring postgresql'
-sudo cp ./postgresql.conf /var/lib/psql/17/postgresql.conf
+sudo cp ./postgresql.conf /var/lib/psql/17/main/postgresql.conf
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 sudo -i -u postgres
