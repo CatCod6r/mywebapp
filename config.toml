@@ -1,5 +1,9 @@
-db_host = "127.0.0.1"
-db_name = "mywebapp-db"
-db_user = "mywebapp-user"
-db_password = "12345678"
+[database]
+host = "localhost"
+database = "mywebapp_db"
+user = "app"
+password = "12345678"
+
+[server]
 port = 5000
+bind_address = "127.0.0.1"
