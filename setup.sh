@@ -27,8 +27,15 @@ sudo echo "operator:12345678" | chpasswd
 sudo chage -d 0 operator
 
 # Operator restrictions
+echo 'operator ALL=(ALL) NOPASSWD: /usr/bin/systemctl start mywebapp.service, \
+  /usr/bin/systemctl stop mywebapp.service, /usr/bin/systemctl restart mywebapp.service, \
+  /usr/bin/systemctl status mywebapp.service, /usr/bin/systemctl reload nginx.service' \
+  | sudo tee /etc/sudoers.d/operator-rules > /dev/null
+chmod 0440 /etc/sudoers.d/operator-rules
 
 # Lock default vagrant user
+sudo passwd -l vagrant
+sudo chage -E 0 vagrant
 
 # Vagrant Ubuntu boxes usually disable password SSH logins by default.
 echo 'Allowing for ssh into virtual machine'
@@ -37,7 +44,7 @@ sudo systemctl restart ssh
 
 # Install and enable postgresql
 echo 'Configuring postgresql'
-sudo cp ./postgresql.conf /var/lib/pgsql/17/postgresql.conf
+sudo cp ./postgresql.conf /var/lib/psql/17/postgresql.conf
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 sudo -i -u postgres
@@ -57,8 +64,10 @@ systemctl enable mywebapp
 
 # Start nginx
 echo 'Configuring nginx'
-
-systemctl start nginx
+cp ./mywebapp.conf /etc/nginx/sites-available/vaultwarden.conf
+sudo ln -s /etc/nginx/sites-available/vaultwarden.conf /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl start nginx
 
 
 # Gradebook
