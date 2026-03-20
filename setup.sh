@@ -1,8 +1,15 @@
 #!/bin/sh
 
+
+#set +e
 # Installing packets
 echo 'Installing necessary packages'
-sudo apt install -y postgresql-17 nginx python 
+sudo apt update && sudo apt upgrade -y \
+  && sudo apt install -y curl ca-certificates gpg lsb-release \
+  && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+  | sudo gpg --dearmor -o /usr/share/keyrings/postgresql.gpg
+sudo apt update
+sudo apt install -y postgresql-17 nginx python3 
 pip install -r ./mywebapp/requirements.txt
 
 echo 'Creating users'
