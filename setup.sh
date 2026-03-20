@@ -14,12 +14,14 @@ sudo apt install -y postgresql-17 nginx python3 python3-pip python3-venv
 
 # Install pip packages
 sudo mkdir -p /etc/mywebapp
-sudo cp -r ./mywebapp/* /etc/mywebapp/
 sudo cp ./config.toml /etc/mywebapp/config.toml
-sudo chown -R app:app /etc/mywebapp
-
-sudo -u app python3 -m venv /etc/mywebapp/venv
-sudo -u app /etc/mywebapp/venv/bin/pip install -r /etc/mywebapp/requirements.txt
+sudo chown -R root:app /etc/mywebapp
+sudo chmod 640 /etc/mywebapp/config.toml
+sudo mkdir -p /opt/mywebapp
+sudo cp ./app.py ./migrate.py ./requirements.txt /opt/mywebapp/
+sudo chown -R app:app /opt/mywebapp
+sudo -u app python3 -m venv /opt/mywebapp/venv
+sudo -u app /opt/mywebapp/venv/bin/pip install -r /opt/mywebapp/requirements.txt
 
 echo 'Creating users'
 # User student creation
