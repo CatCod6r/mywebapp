@@ -4,12 +4,11 @@
 #set +e
 # Installing packets
 echo 'Installing necessary packages'
-sudo apt update && sudo apt upgrade -y \
-  && sudo apt install -y curl ca-certificates gpg lsb-release \
-  && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
-  | sudo gpg --dearmor -o /usr/share/keyrings/postgresql.gpg
-sudo apt update
-sudo apt install -y postgresql-17 nginx python3 
+sudo apt update && sudo apt upgrade -y
+sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'G
+curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
+sudo apt update -y
+sudo apt install -y postgresql-17 nginx python3 python3-pip python3-venv
 pip install -r ./mywebapp/requirements.txt
 
 echo 'Creating users'
@@ -46,7 +45,7 @@ sudo chage -E 0 vagrant
 
 # Vagrant Ubuntu boxes usually disable password SSH logins by default.
 echo 'Allowing for ssh into virtual machine'
-sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config.d/*.conf /e>
+sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config.d/*.conf 
 sudo systemctl restart ssh
 
 # Install and enable postgresql
