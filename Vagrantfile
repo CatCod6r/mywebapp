@@ -2,7 +2,7 @@ Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/jammy64"
 
   config.vm.provider "virtualbox" do |v|
-    v.name = "lab1-docker"
+    v.name = "lab2-docker"
     v.memory = 2048
     v.cpus = 1
   end
@@ -20,9 +20,5 @@ Vagrant.configure("2") do |config|
     chmod +x ./setup.sh    
     sudo ./setup.sh
   SHELL
-
-  config.trigger.after :up do |trigger|
-    trigger.run_remote = { inline: "echo 'VM is up, Docker is installed, and containers are running!'" }
-  end
 
 end
