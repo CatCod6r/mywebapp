@@ -1,0 +1,6 @@
+flask
+psycopg2-binary
+toml
+flake8
+pytest
+pytest-cov
