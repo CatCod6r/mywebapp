@@ -35,7 +35,7 @@ jobs:
           export PYTHONPATH=.
           pytest --cov=./ --cov-report=xml
 
-  # ЕТАП 2: Continuous Delivery (Розгортання на self-hosted раннері)
+# ЕТАП 2: Continuous Delivery (Розгортання на self-hosted раннері)
   cd:
     needs: ci
     if: github.event_name == 'push' && github.ref == 'refs/heads/lab3'
@@ -45,11 +45,14 @@ jobs:
 
       - name: Deploy with Docker Compose
         run: |
-          # Працюємо прямо з кореня, де лежить docker-compose.yml
+          # 1. Заходимо в папку з лабою, щоб Docker Compose правильно підтягнув конфіг Nginx
+          cd mywebapp
+          
+          # 2. Запускаємо збірку та піднімаємо контейнери
           sudo docker compose up -d --build
 
       - name: Run Post-Deployment Verification
         run: |
-          # verify.sh лежить тут же, в корені репозиторію
+          # 3. verify.sh лежить у корені, тому запускаємо його прямо звідси без переходів
           chmod +x ./verify.sh
           ./verify.sh
