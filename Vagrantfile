@@ -2,7 +2,7 @@ Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/jammy64"
 
   config.vm.provider "virtualbox" do |v|
-    v.name = "lab2-docker"
+    v.name = "lab3"
     v.memory = 2048
     v.cpus = 1
   end
