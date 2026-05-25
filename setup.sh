@@ -23,8 +23,6 @@ sudo systemctl enable docker
 sudo systemctl start docker
 
 echo 'Запуск контейнерів через Docker Compose...'
-# Оскільки Vagrantfile клонує репозиторій і переходить у папку mywebapp перед запуском setup.sh,
-# ми знаходимося в директорії, де лежить ваш docker-compose.yml
 sudo docker compose up -d --build
 
 echo 'Контейнери успішно запущені!'
