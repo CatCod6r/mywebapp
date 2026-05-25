@@ -33,6 +33,7 @@ jobs:
       - name: Run Tests with Coverage
         run: |
           cd mywebapp
+          export PYTHONPATH=.
           pytest --cov=./ --cov-report=xml
 
   # ЕТАП 2: Continuous Delivery (Розгортання у Вагранті для lab3)
