@@ -1,0 +1,13 @@
+[Unit]
+Description=Flask Web Application (Lab4 Variant 29)
+After=network.target
+
+[Service]
+User=app
+WorkingDirectory=/opt/mywebapp
+ExecStartPre=/usr/bin/python3 /opt/mywebapp/migrate.py
+ExecStart=/usr/bin/python3 /opt/mywebapp/app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

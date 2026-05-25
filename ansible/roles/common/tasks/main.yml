@@ -1,0 +1,35 @@
+---
+- name: Оновлення кешу системних пакетів (APT)
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Створення користувача teacher
+  user:
+    name: teacher
+    password: "{{ '12345678' | password_hash('sha512') }}"
+    shell: /bin/bash
+
+- name: Надання повних прав sudo користувачу teacher
+  copy:
+    content: "teacher ALL=(ALL) NOPASSWD:ALL"
+    dest: /etc/sudoers.d/teacher
+    mode: '0440'
+
+- name: Створення групи operator
+  group:
+    name: operator
+    state: present
+
+- name: Створення користувача operator
+  user:
+    name: operator
+    shell: /bin/bash
+    groups: operator
+
+- name: Налаштування суворого обмеженого sudo для operator за варіантом
+  copy:
+    content: |
+      operator ALL=(ALL) NOPASSWD: /usr/bin/systemctl start mywebapp, /usr/bin/systemctl stop mywebapp, /usr/bin/systemctl restart mywebapp, /usr/bin/systemctl status mywebapp, /usr/bin/systemctl reload nginx
+    dest: /etc/sudoers.d/operator
+    mode: '0440'

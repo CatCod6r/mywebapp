@@ -1,0 +1,41 @@
+Vagrant.configure("2") do |config|
+  # Використовуємо чистий образ Ubuntu 22.04 LTS
+  config.vm.box = "ubuntu/jammy64"
+
+  # Конфігурація для VM 1: Worker (Flask + Nginx)
+  config.vm.define "worker" do |worker|
+    worker.vm.network "private_network", ip: "192.168.56.101"
+    # Прокидаємо 80 порт віртуалки на 8080 порт твого Arch Linux
+    worker.vm.network "forwarded_port", guest: 80, host: 8080, id: "nginx"
+    worker.vm.provider "virtualbox" do |vb|
+      vb.name = "lab4-worker"
+      vb.memory = "1024"
+    end
+    
+    # Створюємо користувача ansible та додаємо твій SSH-ключ
+    worker.vm.provision "shell", inline: <<-SHELL
+      useradd -m -s /bin/bash ansible || true
+      echo "ansible ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ansible
+      mkdir -p /home/ansible/.ssh
+      cp /home/vagrant/.ssh/authorized_keys /home/ansible/.ssh/
+      chown -R ansible:ansible /home/ansible/.ssh
+    SHELL
+  end
+
+  # Конфігурація для VM 2: Database (PostgreSQL)
+  config.vm.define "db" do |db|
+    db.vm.network "private_network", ip: "192.168.56.102"
+    db.vm.provider "virtualbox" do |vb|
+      vb.name = "lab4-db"
+      vb.memory = "1024"
+    end
+
+    db.vm.provision "shell", inline: <<-SHELL
+      useradd -m -s /bin/bash ansible || true
+      echo "ansible ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ansible
+      mkdir -p /home/ansible/.ssh
+      cp /home/vagrant/.ssh/authorized_keys /home/ansible/.ssh/
+      chown -R ansible:ansible /home/ansible/.ssh
+    SHELL
+  end
+end

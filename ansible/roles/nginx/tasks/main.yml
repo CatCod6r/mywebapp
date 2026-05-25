@@ -1,0 +1,18 @@
+---
+- name: Встановлення веб-сервера Nginx
+  apt:
+    name: nginx
+    state: present
+
+- name: Налаштування сайту за замовчуванням через шаблон
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/sites-available/default
+  register: nginx_config
+
+- name: Перезапуск Nginx для застосування нових налаштувань проксі
+  systemd:
+    name: nginx
+    state: restarted
+    enabled: yes
+  when: nginx_config.changed

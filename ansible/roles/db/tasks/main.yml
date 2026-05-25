@@ -1,0 +1,31 @@
+---
+- name: Встановлення СУБД PostgreSQL та системних модулів
+  apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+      - python3-psycopg2
+    state: present
+
+- name: Конфігурація postgresql.conf для прослуховування мережевих інтерфейсів
+  lineinfile:
+    dest: /etc/postgresql/14/main/postgresql.conf
+    regexp: "^#?listen_addresses ="
+    line: "listen_addresses = '*'"
+  register: postgres_config
+
+- name: Обмеження доступу у pg_hba.conf (дозволено тільки для VM worker)
+  postgresql_pg_hba:
+    dest: /etc/postgresql/14/main/pg_hba.conf
+    type: host
+    database: flask_db
+    user: flask_user
+    address: 192.168.56.101/32
+    method: md5
+  register: postgres_hba
+
+- name: Перезапуск служби PostgreSQL у разі зміни конфігурації
+  systemd:
+    name: postgresql
+    state: restarted
+  when: postgres_config.changed or postgres_hba.changed

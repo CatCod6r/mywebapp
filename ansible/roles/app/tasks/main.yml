@@ -1,0 +1,44 @@
+---
+- name: Створення ізольованого системного користувача app (без login)
+  user:
+    name: app
+    shell: /usr/sbin/nologin
+    system: yes
+
+- name: Синхронізація вихідного коду застосунку у директорію /opt
+  copy:
+    src: ../../../mywebapp/
+    dest: /opt/mywebapp
+    owner: app
+    group: app
+    mode: '0755'
+
+- name: Встановлення необхідних Python пакетів через pip
+  pip:
+    requirements: /opt/mywebapp/requirements.txt
+
+- name: Динамічна генерація файлу конфігурації config.toml (Jinja2)
+  template:
+    src: config.toml.j2
+    dest: /etc/mywebapp/config.toml
+    mode: '0644'
+
+- name: Створення обов'язкового файлу gradebook із номером варіанту 29
+  copy:
+    content: "29"
+    dest: /home/student/gradebook
+    mode: '0644'
+
+- name: Створення та активація Systemd сервісу для керування Flask-додатком
+  template:
+    src: mywebapp.service.j2
+    dest: /etc/systemd/system/mywebapp.service
+  register: app_service
+
+- name: Демон-релоад та перезапуск сервісу застосунку
+  systemd:
+    name: mywebapp
+    daemon_reload: yes
+    state: restarted
+    enabled: yes
+  when: app_service.changed

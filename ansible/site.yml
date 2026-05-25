@@ -1,0 +1,19 @@
+---
+- name: Базова конфігурація для всіх вузлів
+  hosts: all
+  become: yes
+  roles:
+    - common
+
+- name: Розгортання та налаштування СУБД
+  hosts: db
+  become: yes
+  roles:
+    - db
+
+- name: Розгортання веб-застосунку та проксі-сервера
+  hosts: workers
+  become: yes
+  roles:
+    - app
+    - nginx
