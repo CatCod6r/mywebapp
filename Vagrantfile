@@ -15,7 +15,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     # Видаляємо стару папку, якщо вона є, щоб git clone не виводив помилку при перезапуску
     rm -rf mywebapp
-    git clone https://github.com/CatCod6r/mywebapp.git
+    git clone -b lab3 https://github.com/CatCod6r/mywebapp.git
     cd mywebapp
     chmod +x ./setup.sh    
     sudo ./setup.sh
