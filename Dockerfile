@@ -20,4 +20,4 @@ RUN sed -i 's/host = "localhost"/host = "db"/' /etc/mywebapp/config.toml && \
 EXPOSE 5000
 
 # Запускаємо міграції перед стартом застосунку
-CMD python migrate.py && python app.py
+CMD ["/bin/sh", "-c", "python migrate.py && python app.py"]
