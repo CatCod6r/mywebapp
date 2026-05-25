@@ -2,9 +2,10 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main lab3 ]
+    # ПРАВИЛЬНИЙ СИНТАКСИС: кожна гілка має бути елементом масиву у квадратних дужках через кому
+    branches: [ main, lab3 ]
   pull_request:
-    branches: [ main lab3 ]
+    branches: [ main, lab3 ]
 
 jobs:
   # ЕТАП 1: Continuous Integration (Аналіз та Тести)
@@ -19,29 +20,37 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r mywebapp/requirements.txt
 
       - name: Lint with flake8 (Static Analysis)
-        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        run: flake8 mywebapp/ --count --select=E9,F63,F7,F82 --show-source --statistics
 
       - name: Lint Dockerfile (Hadolint)
         uses: hadolint/hadolint-action@v3.1.0
         with:
-          dockerfile: Dockerfile
+          dockerfile: mywebapp/Dockerfile
 
       - name: Run Tests with Coverage
-        run: pytest --cov=./ --cov-report=xml
+        run: |
+          cd mywebapp
+          pytest --cov=./ --cov-report=xml
 
-  # ЕТАП 2: Continuous Delivery (Розгортання)
+  # ЕТАП 2: Continuous Delivery (Розгортання у Вагранті для lab3)
   cd:
     needs: ci
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: self-hosted # Використовує runner, який ви запустите у Vagrant
+    # ТУТ БУЛА ПОМИЛКА: змінено перевірку з 'refs/heads/main' на 'refs/heads/lab3'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/lab3'
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
 
       - name: Deploy with Docker Compose
-        run: sudo docker compose up -d --build
+        run: |
+          cd mywebapp
+          sudo docker compose up -d --build
 
       - name: Run Post-Deployment Verification
-        run: ./verify.sh
+        run: |
+          cd mywebapp
+          chmod +x ./verify.sh
+          ./verify.sh
