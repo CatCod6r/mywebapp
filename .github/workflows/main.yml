@@ -28,7 +28,7 @@ jobs:
       - name: Lint Dockerfile (Hadolint)
         uses: hadolint/hadolint-action@v3.1.0
         with:
-          dockerfile: mywebapp/Dockerfile
+          dockerfile: Dockerfile
 
       - name: Run Tests with Coverage
         run: |
