@@ -1,129 +1,124 @@
-# mywebapp: Automated Web Service Deployment
+# Лабораторна робота №4: IaC (Infrastructure as Code) — Vagrant та Ansible
 
-[![OS: Ubuntu 24.04](https://img.shields.io/badge/OS-Ubuntu_24.04-orange?style=flat-square&logo=ubuntu)](https://ubuntu.com/)
-[![Stack: Python/Flask](https://img.shields.io/badge/Stack-Python_Flask-blue?style=flat-square&logo=flask)](https://flask.palletsprojects.com/)
-[![DB: PostgreSQL](https://img.shields.io/badge/DB-PostgreSQL-blue?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
+Цей репозиторій містить фінальну реалізацію розподіленої інфраструктури для веб-застосунку на Flask з базою даних PostgreSQL та веб-сервером Nginx (**Варіант №29**). 
 
-## 📖 Project Overview
-This project is a fully automated deployment of a **Simple Inventory** web service. It uses **Nginx** as a reverse proxy, **PostgreSQL** for data persistence, and **Systemd** for process management. The deployment is fully scripted via Vagrant and Bash.
-
-### 🧮 Individual Variant (N=29)
-Based on the student number **29**, the following variants were implemented:
-* **V2 (Database & Config):** `(29 % 2) + 1 = 2` → **PostgreSQL** and **TOML Config File**.
-* **V3 (Application Topic):** `(29 % 3) + 1 = 3` → **Simple Inventory**.
-* **V5 (Application Port):** `(29 % 5) + 1 = 5` → **Port 5000**.
+Розгортання системи повністю автоматизовано за принципами IaC (Infrastructure as Code) та Configuration Management: створення інфраструктури виконується через **Vagrant**, а декларативне та ідемпотентне налаштування вузлів — через **Ansible**.
 
 ---
 
-## ⚙️ System Architecture
+## 🏗️ Розподілена архітектура системи
 
-* **Reverse Proxy (Nginx):** Listens on Port 80, routes external traffic to the application, and blocks external access to health checks.
-* **Application (Python/Flask):** Runs on Port 5000 as the restricted `app` user from `/opt/mywebapp`.
-* **Database (PostgreSQL):** Bound to `127.0.0.1:5432`, restricted to local access.
-* **Configuration:** Stored separately in `/etc/mywebapp/config.toml`.
+На відміну від попередніх робіт, де всі сервіси працювали локально або всередині Docker-контейнерів на одному хості, у цій роботі систему розділено на два окремі повноцінні вузли в межах однієї ізольованої приватної мережі (`192.168.56.0/24`):
+
+1. **VM1: `worker` (`192.168.56.101`)**
+   * **Nginx (Reverse Proxy):** Слухає зовнішній порт `80` ВМ та проксує запити на Flask. Порт прокинуто на хост-машину як `8080`.
+   * **Web Application (Flask):** Працює на порті `5000` (локальний інтерфейс `127.0.0.1`), запущений як ізольована системна служба через `systemd`.
+2. **VM2: `db` (`192.168.56.102`)**
+   * **SQL Database (PostgreSQL):** Слухає порт `5432`. Приймає мережеві з'єднання **виключно** від хоста `worker` (`192.168.56.101/32`). Будь-який прямий доступ до СУБД ззовні або з хост-комп'ютера заблоковано на рівні конфігурації `pg_hba.conf`.
 
 ---
 
-## 🚀 Deployment Guide
+## 📂 Структура проєкту
 
-To deploy the system automatically, clone the repository and run the setup script on a fresh Ubuntu machine (or via Vagrant):
+```text
+├── Vagrantfile             # Декларативний опис та створення 2-х віртуальних машин
+├── mywebapp/               # Вихідний код веб-застосунку з Лаби №1
+│   ├── app.py              # Flask додаток (оновлений для перевірки зв'язку з БД на VM2)
+│   ├── migrate.py          # Скрипт автоматичної ініціалізації/міграції БД
+│   └── requirements.txt    # Залежності застосунку
+└── ansible/                # Сценарії автоматизації конфігурування (Ansible)
+    ├── inventory.ini       # Опис груп хостів (workers, db) та шляхів до SSH-ключів
+    ├── site.yml            # Головний плейбук, що об'єднує ролі
+    └── roles/              # Модульні Ansible-ролі
+        ├── common/         # Оновлення системних пакетів, створення користувачів та прав sudo
+        ├── db/             # Встановлення PostgreSQL та налаштування мережевої безпеки
+        ├── app/            # Деплой коду, генерація config.toml та налаштування сервісу systemd
+        └── nginx/          # Встановлення та конфігурування reverse proxy
+
+```
+
+---
+
+## 🛠️ Специфікація середовища розгортання (Provisioning)
+
+З огляду на специфіку Rolling-release дистрибутивів (Arch Linux) та застарілість офіційного провайдера `virtualbox` для Terraform у HashiCorp Реєстрі, етап автоматизованого створення інфраструктури було перенесено на **Vagrant**.
+
+При запуску `vagrant up` виконується:
+
+* Створення двох ізольованих вузлів на базі офіційного Cloud-образу `ubuntu/jammy64`.
+* Об'єднання їх у приватну мережу `192.168.56.x`.
+* Автоматичне створення службового користувача `ansible` з повними правами `sudo` без пароля та імпортом авторизованих SSH-ключів для автоматизації.
+
+---
+
+## 👤 Ролі та розмежування рівнів доступу (Варіант Simple Inventory)
+
+Відповідно до вимог варіанту №29, за допомогою Ansible-ролі `common` налаштовано суворе розмежування прав:
+
+* **`ansible`:** Системний користувач автоматизації. Має повний `NOPASSWD: ALL` у `sudoers`.
+* **`teacher`:** Присутній на обох ВМ. Створений із паролем за замовчуванням `12345678` та має повні права `sudo` з необхідністю введення пароля.
+* **`app`:** Ізольований системний користувач на `worker`. Створений без оболонки входу (`/usr/sbin/nologin`). Від його імені безпечно працює процес веб-застосунку через Systemd-сервіс.
+* **`operator`:** Користувач на `worker` із суворо обмеженими правами. Через файл `/etc/sudoers.d/operator` йому дозволено виконувати без пароля **виключно** такі команди:
+* `systemctl start mywebapp`
+* `systemctl stop mywebapp`
+* `systemctl restart mywebapp`
+* `systemctl status mywebapp`
+* `systemctl reload nginx`
+
+
+
+---
+
+## 🚀 Порядок розгортання системи
+
+Вся система піднімається та налаштовується локально у дві команди:
+
+### 1. Запуск інфраструктури (Provisioning)
+
+Перебуваючи в корені репозиторію, запустіть віртуальні машини:
 
 ```bash
 vagrant up
+
 ```
 
-### Access Credentials
-* **student:** Full sudo access.
-* **teacher:** Sudo access; default password `12345678` (reset required on first login).
-* **operator:** Limited sudo access (only `systemctl start/stop/status/restart mywebapp` and `systemctl reload nginx`); default password `12345678` (reset required on first login).
+*Зачекайте 1-2 хвилини, поки Vagrant розгорне ОС та налаштує мережеві інтерфейси.*
+
+### 2. Конфігурування та деплой (Configuration Management)
+
+Перейдіть у папку з Ansible та запустіть автоматичне налаштування плейбука (із вимкненням інтерактивної перевірки SSH-ключів при першому підключенні):
+
+```bash
+cd ansible
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.ini site.yml
+
+```
 
 ---
 
-## 👨‍🏫 Teacher Instructions & Grading Guide
+## 🎯 Перевірка ідемпотентності та працездатності
 
-This section is specifically for the instructor reviewing the laboratory work.
+### Ідемпотентність (Декларативний підхід)
 
-### 1. Initial Login & Password Reset
-To begin grading, SSH into the virtual machine using the `teacher` account.
+Для перевірки ідемпотентності запустіть плейбук вдруге одразу після першого успішного виконання:
+
 ```bash
-ssh -p 2222 teacher@127.0.0.1
-```
-* **Default Password:** `12345678`
-* **Note:** The system is configured with `chage -d 0` to force a password change immediately upon your first login. You will be prompted to enter the current password, then a new password of your choosing.
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.ini site.yml
 
-### 2. Verify Infrastructure Requirements
-Once logged in, you can verify the specific variant requirements have been met:
-
-**Verify Database Schema & Migration (Requirement: Tables & Indexes):**
-```bash
-sudo -u postgres psql -d mywebapp_db -c "\d inventory"
-sudo -u postgres psql -d mywebapp_db -c "\di"
 ```
 
-**Verify Operator Permissions (Requirement: Limited sudo execution):**
-```bash
-sudo -l -U operator
-```
+**Результат:** У фінальному звіті `PLAY RECAP` для обох хостів (`worker1`, `db1`) лічильник змін має показувати **`changed=0`**. Це доводить, що конфігурація описує кінцевий стан системи й не створює побічних ефектів при повторних запусках.
 
-**Verify Configuration File (Requirement: TOML format):**
-```bash
-sudo cat /etc/mywebapp/config.toml
-```
+### Перевірка веб-додатку та СУБД
 
-**Verify Systemd & Execution Paths (Requirement: Run as app, migrate before start):**
-```bash
-systemctl cat mywebapp.service
-```
+1. На хост-машині відкрийте браузер за адресою: `http://localhost:8080/`
+2. Перевірте ендпоінт готовності: `http://localhost:8080/health/ready`
+* Веб-застосунок Flask з `VM1` робить реальний запит до PostgreSQL на `VM2`. Якщо зв'язок успішний — сторінка поверне `200 OK`.
 
-**Verify Gradebook (Requirement: Contains variant number):**
+
+3. На `worker` перевірте наявність файлу варіанту:
 ```bash
 cat /home/student/gradebook
+# Вивід має бути: 29
+
 ```
-
----
-
-## 🔌 API Testing Guide
-
-The API supports **Content Negotiation**. It returns JSON by default but returns HTML structures if the `Accept: text/html` header is provided. You can test these endpoints directly from the VM terminal.
-
-### Business Logic Endpoints (Public via Port 80)
-
-**🏠 Root Directory (Lists endpoints)**
-```bash
-curl -i [http://127.0.0.1/](http://127.0.0.1/)
-```
-
-**➕ Create an Inventory Item**
-```bash
-curl -X POST [http://127.0.0.1/items](http://127.0.0.1/items) \
-     -H "Content-Type: application/json" \
-     -d '{"name": "Cisco Router", "quantity": 10}'
-```
-
-**📜 List All Items (Content Negotiation)**
-```bash
-# JSON output:
-curl -H "Accept: application/json" [http://127.0.0.1/items](http://127.0.0.1/items)
-
-# HTML table output:
-curl -H "Accept: text/html" [http://127.0.0.1/items](http://127.0.0.1/items)
-```
-
-### Health Check Endpoints (Internal Only)
-Per security requirements, these are **blocked by Nginx on port 80** and can only be accessed internally on port `5000`.
-
-**💓 Liveness Probe**
-```bash
-# This will fail (404/403) via Nginx:
-curl -I [http://127.0.0.1/health/alive](http://127.0.0.1/health/alive)
-
-# This will succeed via internal port:
-curl [http://127.0.0.1:5000/health/alive](http://127.0.0.1:5000/health/alive)
-```
-
-**🩺 Readiness Probe**
-```bash
-# This will succeed (200 OK) if DB is connected:
-curl [http://127.0.0.1:5000/health/ready](http://127.0.0.1:5000/health/ready)
-```
->>>>>>> 8af2f624df9fe7cccba92cad56d512553e0cb38c
