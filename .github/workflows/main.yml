@@ -2,7 +2,6 @@ name: CI/CD Pipeline
 
 on:
   push:
-    # ПРАВИЛЬНИЙ СИНТАКСИС: кожна гілка має бути елементом масиву у квадратних дужках через кому
     branches: [ main, lab3 ]
   pull_request:
     branches: [ main, lab3 ]
@@ -36,10 +35,9 @@ jobs:
           export PYTHONPATH=.
           pytest --cov=./ --cov-report=xml
 
-  # ЕТАП 2: Continuous Delivery (Розгортання у Вагранті для lab3)
+  # ЕТАП 2: Continuous Delivery (Розгортання на self-hosted раннері)
   cd:
     needs: ci
-    # ТУТ БУЛА ПОМИЛКА: змінено перевірку з 'refs/heads/main' на 'refs/heads/lab3'
     if: github.event_name == 'push' && github.ref == 'refs/heads/lab3'
     runs-on: self-hosted
     steps:
@@ -47,11 +45,11 @@ jobs:
 
       - name: Deploy with Docker Compose
         run: |
-          chmod +x ./setup.sh
-          ./setup.sh
+          # Працюємо прямо з кореня, де лежить docker-compose.yml
           sudo docker compose up -d --build
 
       - name: Run Post-Deployment Verification
         run: |
+          # verify.sh лежить тут же, в корені репозиторію
           chmod +x ./verify.sh
           ./verify.sh
