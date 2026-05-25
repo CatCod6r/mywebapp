@@ -2,7 +2,7 @@
 set +e
 
 echo 'Оновлення системи...'
-sudo apt update && sudo apt upgrade -y
+sudo apt update && sudo apt upgrade -y > /dev/null
 
 echo 'Встановлення необхідних пакетів для Docker...'
 sudo apt install -y ca-certificates curl gnupg lsb-release
