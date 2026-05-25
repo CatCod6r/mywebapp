@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main lab3 ]
   pull_request:
-    branches: [ main ]
+    branches: [ main lab3 ]
 
 jobs:
   # ЕТАП 1: Continuous Integration (Аналіз та Тести)
