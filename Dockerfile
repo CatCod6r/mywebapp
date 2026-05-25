@@ -9,7 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 2. Копіюємо весь вміст папки з кодом (app.py, migrate.py тощо) в контейнер
 COPY mywebapp/ .
 
-COPY mywebapp/config.toml /etc/mywebapp/config.toml
+RUN mkdir -p /etc/mywebapp && cp ./config.toml /etc/mywebapp/config.toml
 
 # Змінюємо хост БД з localhost на db (назва сервісу в docker-compose)
 # та bind_address на 0.0.0.0, щоб Flask був доступний ззовні контейнера
