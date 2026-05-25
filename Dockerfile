@@ -2,12 +2,12 @@ FROM python:3.10-slim
 
 WORKDIR /opt/mywebapp
 
-# Ефективне використання шарів: спочатку копіюємо requirements
-COPY requirements.txt .
+# 1. Копіюємо requirements.txt саме з підпапки з кодом
+COPY mywebapp/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копіюємо решту коду
-COPY . .
+# 2. Копіюємо весь вміст папки з кодом (app.py, migrate.py тощо) в контейнер
+COPY mywebapp/ .
 
 # Створюємо директорію для конфігу та копіюємо його
 RUN mkdir -p /etc/mywebapp && cp config.toml /etc/mywebapp/config.toml
