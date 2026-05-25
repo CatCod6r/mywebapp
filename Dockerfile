@@ -7,7 +7,7 @@ COPY mywebapp/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 2. Копіюємо весь вміст папки з кодом (app.py, migrate.py тощо) в контейнер
-COPY mywebapp/ .
+COPY . .
 RUN ls -la && pwd
 RUN mkdir -p /etc/mywebapp && cp ./config.toml /etc/mywebapp/config.toml
 
