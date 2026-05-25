@@ -47,13 +47,11 @@ jobs:
 
       - name: Deploy with Docker Compose
         run: |
-          cd mywebapp
           chmod +x ./setup.sh
           ./setup.sh
           sudo docker compose up -d --build
 
       - name: Run Post-Deployment Verification
         run: |
-          cd mywebapp
           chmod +x ./verify.sh
           ./verify.sh
